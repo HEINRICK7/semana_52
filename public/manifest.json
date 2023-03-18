@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "App Semana 52",
+  "short_name": "App Semana 52",
+  "name": "Semana 52",
   "icons": [
     {
       "src": "logo.ico",
@@ -8,12 +8,12 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo.png",
+      "src": "logo192.png",
       "type": "image/png",
       "sizes": "592x592"
     },
     {
-      "src": "logo.png",
+      "src": "logo512.png",
       "type": "image/png",
       "sizes": "812x812"
     }
