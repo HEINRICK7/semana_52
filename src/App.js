@@ -257,7 +257,7 @@
 //     }
 
 //     export default App;
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import SplashScreen from "./splash";
 
 const ChallengeTable = () => {
@@ -266,36 +266,60 @@ const ChallengeTable = () => {
   const initialAmount = 22.47;
   const weeklyIncrement = 3;
 
-  const weeks = [];
-  for (let i = 1; i <= totalWeeks; i++) {
-    weeks.push({
-      week: i,
-      amount: initialAmount + weeklyIncrement * (i - 1)
-    });
-  }
+  const weeks = useMemo(() => {
+    const w = [];
+    for (let i = 1; i <= totalWeeks; i++) {
+      w.push({
+        week: i,
+        amount: initialAmount + weeklyIncrement * (i - 1),
+      });
+    }
+    return w;
+  }, [initialAmount, weeklyIncrement]);
+
   const [completedWeeks, setCompletedWeeks] = useState([]);
   const [totalSaved, setTotalSaved] = useState(0);
-  const [localCompletedWeeks, setLocalCompletedWeeks] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+  const [initialized, setInitialized] = useState(false);
+  // Carrega as semanas concluídas do localStorage
+  useEffect(() => {
+    const completedWeeksFromStorage = localStorage.getItem("completedWeeks");
+    if (completedWeeksFromStorage) {
+      setCompletedWeeks(JSON.parse(completedWeeksFromStorage));
+    }
+    setLoading(false);
+    setInitialized(true);
+  }, [weeks]);
+
+  // Atualiza o totalSaved sempre que há uma mudança nas semanas concluídas
+  useEffect(() => {
+    if (initialized) {
+      let total = 0;
+      completedWeeks.forEach((week) => {
+        total += weeks[week - 1].amount;
+      });
+      setTotalSaved(total);
+
+      // Atualiza as informações salvas no localStorage
+      localStorage.setItem("completedWeeks", JSON.stringify(completedWeeks));
+    }
+  }, [completedWeeks, weeks, initialized]);
+
   const handleCheck = (week) => {
-    const weekIndex = localCompletedWeeks.findIndex(w => w.week === week);
+    const weekIndex = completedWeeks.findIndex((w) => w === week);
     if (weekIndex === -1) {
-      setLocalCompletedWeeks([...localCompletedWeeks, { week, completed: true }]);
       setCompletedWeeks([...completedWeeks, week]);
-      setTotalSaved(totalSaved + weeks[week - 1].amount);
     } else {
-      setLocalCompletedWeeks(localCompletedWeeks.filter(w => w.week !== week));
-      setCompletedWeeks(completedWeeks.filter(w => w !== week));
-      setTotalSaved(totalSaved - weeks[week - 1].amount);
+      setCompletedWeeks(completedWeeks.filter((w) => w !== week));
     }
   };
-  useEffect(() => {
-   setLoading(false);
-  }, []);
+
+  if (loading || !initialized) {
+    return <SplashScreen />;
+  }
+
   return (
     <>
-      {loading && <SplashScreen />}
       <table>
         <thead>
           <tr>
@@ -313,11 +337,7 @@ const ChallengeTable = () => {
                 <input
                   className="input_checkbox"
                   type="checkbox"
-                  checked={
-                    localCompletedWeeks.findIndex(
-                      (w) => w.week === week.week && w.completed
-                    ) !== -1
-                  }
+                  checked={completedWeeks.includes(week.week)}
                   onChange={() => handleCheck(week.week)}
                 />
               </td>
